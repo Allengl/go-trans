@@ -1,22 +1,24 @@
 package main
 
 import (
-	"os"
-	"os/signal"
-	"syscall"
+	"os/exec"
 
-	"github.com/zserge/lorca"
+	"github.com/gin-gonic/gin"
 )
 
 
-func main()  {
-	var ui lorca.UI 
-	ui, _ = lorca.New("https://baidu.com", "", 800, 600, "--disable-sync","--disable-translate") // 创建一个窗口
-	chSignal := make(chan os.Signal, 1)   // 1.创建一个信号通道
-	signal.Notify(chSignal, syscall.SIGINT, syscall.SIGTERM) //监听系统信号
-	select {     // 阻塞主线程 
-	case <-ui.Done():	 // 2.监听窗口关闭事件
-	case <-chSignal:   // 3.监听系统信号
-}
-ui.Close() // 4.关闭窗口
+func main() {
+	go func() {
+		gin.SetMode(gin.DebugMode)
+		router := gin.Default()
+		router.GET("/", func(c *gin.Context) {
+			c.Writer.Write([]byte("Hello World")) //
+		})
+		router.Run(":8080")
+	}()  // 开一个协程
+
+	chromePath := "D:\\Google\\Chrome\\Application\\chrome.exe"
+	cmd := exec.Command(chromePath, "--app=http://127.0.0.1:8080/")
+	cmd.Start()  // 开一个新的进程
+	select {}
 }
