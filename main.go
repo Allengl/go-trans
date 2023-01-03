@@ -5,9 +5,9 @@ import (
 	"os/exec"
 	"os/signal"
 
+	"github.com/Allengl/go-trans/config"
 	"github.com/Allengl/go-trans/server"
 )
-
 
 func main() {
 
@@ -15,19 +15,18 @@ func main() {
 	go server.Run()
 
 	cmd := startBrowser()
-
 	chSignal := listenToInterrupt()
+
 	select {
 	case <-chSignal: // 阻塞等待信号
-	cmd.Process.Kill()
+		cmd.Process.Kill()
 	}
 }
 
 func startBrowser() *exec.Cmd {
-	port := "27149"
 	chromePath := "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"
-	cmd := exec.Command(chromePath, "--app=http://127.0.0.1:"+port+"/static/index.html")
-	cmd.Start()  // 开一个新的进程	
+	cmd := exec.Command(chromePath, "--app=http://127.0.0.1:"+config.GetPort()+"/static/index.html")
+	cmd.Start() // 开一个新的进程
 	return cmd
 }
 
