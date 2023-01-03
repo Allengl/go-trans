@@ -16,6 +16,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/skip2/go-qrcode"
 )
 
 //go:embed frontend/dist/*
@@ -27,6 +28,7 @@ func main() {
 		gin.SetMode(gin.DebugMode)
 		router := gin.Default()
 		staticFiles, _ := fs.Sub(FS, "frontend/dist")
+		router.GET("api/v1/qrcodes", QrcodesController)
 		router.GET("/uploads/:path", UploadsController)
 		router.GET("/api/v1/addresses", AddressesController)
 		router.POST("/api/v1/texts", TextsController)
@@ -93,6 +95,20 @@ func TextsController(c *gin.Context){
 		c.JSON(http.StatusOK, gin.H{"url":"/" + fullpath}) // 返回文件的绝对路径 （不含 exe 所在目录）
 	}
 }
+
+func QrcodesController(c *gin.Context) {
+	if content := c.Query("content"); content != "" {
+		png, err := qrcode.Encode(content, qrcode.Medium, 256)
+		if err != nil {
+			log.Fatal(err)
+			} else {
+			c.Data(http.StatusOK, "image/png", png)
+		}
+	} else {
+		c.Status(http.StatusBadRequest)
+	}
+}
+
 
 func GetUploadsDir() (uploads string) {
 	exe, err := os.Executable()
