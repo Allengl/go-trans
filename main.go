@@ -24,6 +24,7 @@ var FS embed.FS
 
 
 func main() {
+	port := "27149"
 	go func() {
 		gin.SetMode(gin.DebugMode)
 		router := gin.Default()
@@ -51,11 +52,11 @@ func main() {
 				c.Status(http.StatusNotFound)
 			}
 			})
-		router.Run(":8080")
+		router.Run(":" + port)
 	}()  // 开一个协程
 
 	chromePath := "D:\\Google\\Chrome\\Application\\chrome.exe"
-	cmd := exec.Command(chromePath, "--app=http://127.0.0.1:8080/static/index.html")
+	cmd := exec.Command(chromePath, "--app=http://127.0.0.1:"+port+"/static/index.html")
 	cmd.Start()  // 开一个新的进程
 	
 	chSignal := make(chan os.Signal, 1)
