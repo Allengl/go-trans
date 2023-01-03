@@ -20,7 +20,7 @@ func Run() {
 	hub := ws.NewHub()
 	go hub.Run()
 
-	gin.SetMode(gin.DebugMode)
+	gin.SetMode(gin.ReleaseMode)
 	router := gin.Default()
 	staticFiles, _ := fs.Sub(FS, "frontend/dist")
 	router.POST("/api/v1/files", c.FilesController)
