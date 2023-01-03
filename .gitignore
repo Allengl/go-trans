@@ -1,0 +1,5 @@
+node_modules
+.cache
+/go-trans.exe
+/go-trans
+/uploads

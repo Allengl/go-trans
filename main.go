@@ -12,6 +12,7 @@ import (
 	"path"
 	"path/filepath"
 	"io/ioutil"
+	"net"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -26,6 +27,8 @@ func main() {
 		gin.SetMode(gin.DebugMode)
 		router := gin.Default()
 		staticFiles, _ := fs.Sub(FS, "frontend/dist")
+		router.GET("/uploads/:path", UploadsController)
+		router.GET("/api/v1/addresses", AddressesController)
 		router.POST("/api/v1/texts", TextsController)
 		router.StaticFS("/static", http.FS(staticFiles))   //所有以static开头的路由，都会自动读取 dist 目录里面的文件
 		router.NoRoute(func(c *gin.Context) {
@@ -89,4 +92,43 @@ func TextsController(c *gin.Context){
 		}
 		c.JSON(http.StatusOK, gin.H{"url":"/" + fullpath}) // 返回文件的绝对路径 （不含 exe 所在目录）
 	}
+}
+
+func GetUploadsDir() (uploads string) {
+	exe, err := os.Executable()
+	if err != nil {
+		log.Fatal(err)
+	}
+	dir := filepath.Dir(exe)
+	uploads = filepath.Join(dir, "uploads")
+	return
+}
+
+
+func UploadsController(c *gin.Context){
+	if path := c.Param("path"); path != "" {
+		target := filepath.Join(GetUploadsDir(), path)
+		c.Header("Content-Descrption", "File Transfer")
+		c.Header("Content-Transfer-Encoding", "binary")
+		c.Header("Content-Disposition", "attachment; filename="+path)
+		c.Header("Content-Type", "application/octet-stream")
+		c.File(target)
+	} else {
+		c.Status(http.StatusNotFound)
+	}
+}
+
+
+
+func AddressesController(c *gin.Context){
+	addrs, _ := net.InterfaceAddrs() // 获取本机所有的 IP 地址
+	var result []string
+	for _, addr := range addrs { // 遍历所有的 IP 地址
+		if ipnet, ok := addr.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
+			if ipnet.IP.To4() != nil { // 只获取 ipv4 地址
+				result = append(result, ipnet.IP.String()) // 将所有的 IPv4 地址添加到 result 中
+			}
+		}
+	}
+	c.JSON(http.StatusOK, gin.H{"addresses": result}) // 返回所有的 IPv4 地址
 }
