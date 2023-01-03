@@ -9,8 +9,12 @@ import (
 	"os/exec"
 	"os/signal"
 	"strings"
+	"path"
+	"path/filepath"
+	"io/ioutil"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 )
 
 //go:embed frontend/dist/*
@@ -22,6 +26,7 @@ func main() {
 		gin.SetMode(gin.DebugMode)
 		router := gin.Default()
 		staticFiles, _ := fs.Sub(FS, "frontend/dist")
+		router.POST("/api/v1/texts", TextsController)
 		router.StaticFS("/static", http.FS(staticFiles))   //所有以static开头的路由，都会自动读取 dist 目录里面的文件
 		router.NoRoute(func(c *gin.Context) {
 			path := c.Request.URL.Path
@@ -53,5 +58,35 @@ func main() {
 	select {
 	case <-chSignal: // 阻塞等待信号
 	cmd.Process.Kill()
+	}
+}
+
+func TextsController(c *gin.Context){
+	var json struct {
+		Raw string `json:"raw"`
+	}
+	if err := c.ShouldBindJSON(&json); err != nil { // 读取请求体
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	} else {
+		exe, err := os.Executable() // 获取当前可执行文件的路径
+		if err != nil {
+			log.Fatal(err)
+		}
+		dir := filepath.Dir(exe) // 获取当前可执行文件的目录
+		if err != nil {
+			log.Fatal(err)
+		}
+		filename := uuid.New().String() // 生成一个随机的文件名
+		uploads := filepath.Join(dir, "uploads") // 拼接出 uploads 的绝对路径
+		err = os.MkdirAll(uploads, os.ModePerm) // 创建 uploads 目录
+		if err != nil {
+			log.Fatal(err)
+		}
+		fullpath := path.Join("uploads",filename+".txt") // 拼接出文件的绝对路径（不含目录）
+		err = ioutil.WriteFile(filepath.Join(dir, fullpath), []byte(json.Raw), 0644) // 将 json.Raw 写入文件
+		if err != nil {
+			log.Fatal(err)
+		}
+		c.JSON(http.StatusOK, gin.H{"url":"/" + fullpath}) // 返回文件的绝对路径 （不含 exe 所在目录）
 	}
 }
