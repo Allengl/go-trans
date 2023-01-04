@@ -1,4 +1,4 @@
-### 自行编译
+### 编译方法
 ```shell
 git@github.com:Allengl/go-trans.git
 cd go-trans
