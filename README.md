@@ -1,6 +1,6 @@
 ### 编译方法
 ```shell
-git@github.com:Allengl/go-trans.git
+git clone git@github.com:Allengl/go-trans.git
 cd go-trans
 cd server/frontend
 yarn
